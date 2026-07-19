@@ -4,7 +4,12 @@ export interface SubmitVoteResult {
   success: boolean
   message: string
 }
-
+interface RawVoteResult {
+  participant_id: number
+  participant_name: string
+  image_url: string | null
+  vote_count: number | string
+}
 export async function submitVote(
   participantId: number,
   voterKey: string,
@@ -39,11 +44,19 @@ export async function getVoteResults(): Promise<VoteResult[]> {
   )
 
   if (error) {
-    throw new Error(`取得投票結果失敗：${error.message}`)
+    throw new Error(
+      `取得投票結果失敗：${error.message}`,
+    )
   }
 
-  return (data ?? []).map((item) => ({
-    ...item,
-    vote_count: Number(item.vote_count),
-  })) as VoteResult[]
+  const rows = (data ?? []) as RawVoteResult[]
+
+  return rows.map(
+    (item): VoteResult => ({
+      participant_id: Number(item.participant_id),
+      participant_name: item.participant_name,
+      image_url: item.image_url,
+      vote_count: Number(item.vote_count),
+    }),
+  )
 }
