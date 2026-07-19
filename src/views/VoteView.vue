@@ -7,7 +7,28 @@ import { submitVote } from '../services/voteService'
 import { getOrCreateVoterKey } from '../utils/voterKey'
 
 import type { Participant } from '../types/participant'
+import ImagePreviewModal
+  from '../components/ImagePreviewModal.vue'
 
+const isImagePreviewOpen = ref(false)
+const previewImageUrl = ref<string | null>(null)
+const previewImageAlt = ref('')
+
+function openImagePreview(
+  participant: Participant,
+) {
+  if (!participant.image_url) {
+    return
+  }
+
+  previewImageUrl.value =
+    participant.image_url
+
+  previewImageAlt.value =
+    `${participant.work_title}－作者 ${participant.name}`
+
+  isImagePreviewOpen.value = true
+}
 const router = useRouter()
 
 const participants = ref<Participant[]>([])
@@ -109,12 +130,23 @@ onMounted(() => {
         :key="participant.id"
         class="participant-card"
       >
+        <button
+        v-if="participant.image_url"
+        type="button"
+        class="image-preview-button"
+        :aria-label="`查看 ${participant.work_title} 的完整圖片`"
+        @click="openImagePreview(participant)"
+        >
         <img
-          v-if="participant.image_url"
-          :src="participant.image_url"
-          :alt="participant.name"
-          class="participant-image"
+            :src="participant.image_url"
+            :alt="participant.work_title"
+            class="participant-image"
         />
+
+        <span class="zoom-hint">
+            點擊查看完整圖片
+        </span>
+        </button>
 
         <div v-else class="image-placeholder">
           暫無圖片
@@ -146,6 +178,11 @@ onMounted(() => {
         </div>
       </article>
     </section>
+    <ImagePreviewModal
+        v-model="isImagePreviewOpen"
+        :image-url="previewImageUrl"
+        :alt-text="previewImageAlt"
+        />
   </main>
 </template>
 
@@ -257,5 +294,54 @@ h1 {
 .card-content button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+.image-preview-button {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.image-preview-button:focus-visible {
+  outline: 3px solid
+    var(--sky-500, #4cadd9);
+  outline-offset: -3px;
+}
+
+.image-preview-button .participant-image {
+  transition: transform 0.25s ease;
+}
+
+.image-preview-button:hover .participant-image {
+  transform: scale(1.035);
+}
+
+.zoom-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: white;
+  background: rgba(34, 61, 78, 0.78);
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.image-preview-button:hover .zoom-hint,
+.image-preview-button:focus-visible .zoom-hint {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .zoom-hint {
+    opacity: 1;
+  }
 }
 </style>

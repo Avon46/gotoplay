@@ -4,7 +4,27 @@ import { RouterLink } from 'vue-router'
 
 import { getVoteResults } from '../services/voteService'
 import type { VoteResult } from '../types/voteResult'
+import ImagePreviewModal
+  from '../components/ImagePreviewModal.vue'
 
+
+const isImagePreviewOpen = ref(false)
+const previewImageUrl = ref<string | null>(null)
+const previewImageAlt = ref('')
+
+function openImagePreview(
+  result: VoteResult,
+) {
+  if (!result.image_url) {
+    return
+  }
+
+  previewImageUrl.value = result.image_url
+  previewImageAlt.value =
+    `${result.participant_name} 的完整作品圖片`
+
+  isImagePreviewOpen.value = true
+}
 const results = ref<VoteResult[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -71,12 +91,19 @@ onMounted(() => {
           {{ index + 1 }}
         </div>
 
+        <button
+        v-if="result.image_url"
+        type="button"
+        class="result-image-button"
+        :aria-label="`查看 ${result.participant_name} 的完整圖片`"
+        @click="openImagePreview(result)"
+        >
         <img
-          v-if="result.image_url"
-          :src="result.image_url"
-          :alt="result.participant_name"
-          class="participant-image"
+            :src="result.image_url"
+            :alt="result.participant_name"
+            class="participant-image"
         />
+        </button>
 
         <div v-else class="image-placeholder">
           無圖片
@@ -114,6 +141,11 @@ onMounted(() => {
         前往投票
       </RouterLink>
     </nav>
+    <ImagePreviewModal
+        v-model="isImagePreviewOpen"
+        :image-url="previewImageUrl"
+        :alt-text="previewImageAlt"
+        />
   </main>
 </template>
 
@@ -276,6 +308,38 @@ h1 {
   .vote-count strong,
   .vote-count span {
     display: inline;
+  }
+}
+.result-image-button {
+  display: block;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  cursor: zoom-in;
+}
+
+.result-image-button .participant-image {
+  transition: transform 0.22s ease;
+}
+
+.result-image-button:hover .participant-image {
+  transform: scale(1.08);
+}
+
+.result-image-button:focus-visible {
+  outline: 3px solid
+    var(--sky-500, #4cadd9);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .result-image-button {
+    width: 56px;
+    height: 56px;
   }
 }
 </style>
